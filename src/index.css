@@ -1,0 +1,193 @@
+/* src/App.css */
+
+/* Сбрасываем отступы по умолчанию для всего документа */
+body {
+  margin: 0;
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen,
+    Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: #f0f2f5;
+  color: #1c1e21;
+}
+
+/* 1. Главный каркас приложения */
+.app-layout {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+}
+
+/* 2. Навигационное меню */
+.main-nav {
+  background-color: #fff;
+  padding: 0 40px;
+  display: flex;
+  justify-content: center;
+  gap: 1px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  border-bottom: 1px solid #ddd;
+}
+
+.main-nav a {
+  color: #333;
+  padding: 14px 20px;
+  text-decoration: none;
+  font-weight: 500;
+  border-bottom: 3px solid transparent;
+  transition: all 0.2s;
+}
+
+.main-nav a:hover {
+  background-color: #f0f2f5;
+}
+
+.main-nav a.active {
+  color: #1877f2;
+  border-bottom-color: #1877f2;
+}
+
+
+/* 3. Основная область контента */
+.main-content {
+  flex-grow: 1;
+  width: 100%;
+  padding: 40px 20px;
+  box-sizing: border-box;
+  
+  /* --- ФИНАЛЬНОЕ ИСПРАВЛЕНИЕ --- */
+  /* Делаем родительский блок flex-контейнером */
+  display: flex;
+  /* Центрируем дочерний элемент по ГОРИЗОНТАЛИ */
+  justify-content: center;
+  /* Центрируем дочерний элемент по ВЕРТИКАЛИ */
+  align-items: center;
+}
+
+/* 4. Наш белый контейнер внутри основной области */
+.container {
+  max-width: 800px;
+  width: 100%;
+  padding: 20px 40px;
+  background-color: #fff;
+  border-radius: 8px;
+  box-shadow: 0 2px 4px rgba(0, 0, 0, 0.05);
+}
+
+
+/* --- Стили для общих элементов внутри контейнера --- */
+
+.header {
+  text-align: center;
+  border-bottom: 1px solid #ddd;
+  padding-bottom: 10px;
+  margin-bottom: 30px;
+}
+
+.header h1 {
+  margin-bottom: 5px;
+}
+
+h2 {
+  text-align: center;
+  color: #1c1e21;
+  font-size: 1.5em;
+  margin-top: 30px;
+}
+
+.form-field {
+  margin-bottom: 20px;
+}
+
+.form-field label {
+  display: block;
+  font-weight: 600;
+  margin-bottom: 8px;
+}
+
+.form-field input,
+.form-field select,
+.form-field textarea,
+#template-select {
+  width: 100%;
+  padding: 12px;
+  border: 1px solid #ccd0d5;
+  border-radius: 6px;
+  font-size: 1rem;
+  box-sizing: border-box;
+  font-family: inherit;
+  
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+  padding-right: 2.5rem;
+}
+
+.form-field input,
+.form-field textarea {
+  background-image: none;
+  padding-right: 12px;
+}
+
+.form-field input:focus,
+.form-field select:focus,
+.form-field textarea:focus,
+#template-select:focus {
+  outline: none;
+  border-color: #1877f2;
+  box-shadow: 0 0 0 2px #e7f3ff;
+}
+
+.form-field textarea {
+  resize: vertical;
+}
+
+.result-container {
+  margin-top: 30px;
+  border-top: 1px solid #ddd;
+  padding-top: 20px;
+}
+
+.result-container h3 {
+  margin-top: 0;
+}
+
+.result-container textarea {
+  background-color: #f5f5f5;
+  color: #333;
+}
+
+.copy-button {
+  display: block;
+  width: 100%;
+  padding: 12px;
+  margin-top: 10px;
+  font-size: 1rem;
+  font-weight: bold;
+  color: #fff;
+  background-color: #1877f2;
+  border: none;
+  border-radius: 6px;
+  cursor: pointer;
+  transition: background-color 0.2s;
+}
+
+.copy-button:hover {
+  background-color: #166fe5;
+}
+
+.template-selector {
+  margin-top: 20px;
+  padding-top: 20px;
+  border-top: 1px solid #eee;
+}
+
+.template-selector label {
+  display: block;
+  font-size: 0.9em;
+  color: #606770;
+  margin-bottom: 8px;
+}

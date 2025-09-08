@@ -1,0 +1,503 @@
+/* src/App.css (Полный и адаптивный код) */
+
+/* --- ОБЩИЕ ПЕРЕМЕННЫЕ --- */
+:root {
+  --color-primary: #1877f2;
+  --color-primary-hover: #166fe5;
+  --color-text-dark: #1c1e21;
+  --color-text-medium: #606770;
+  --color-text-light: #888;
+  --color-bg-light: #f0f2f5;
+  --color-bg-white: #fff;
+  --color-border-light: #ddd;
+  --color-border-medium: #ccd0d5;
+  --color-shadow: rgba(0,0,0,0.1);
+  --color-shadow-light: rgba(0,0,0,0.05);
+  --color-active-bg: #e7f3ff;
+  --color-input-bg: #f8f9fa;
+  --color-error: #dc3545;
+  --color-error-light: #fbeae9;
+  --color-success: #28a745;
+  --color-success-hover: #218838;
+  --spacing-sm: 8px;
+  --spacing-md: 15px;
+  --spacing-lg: 20px;
+  --spacing-xl: 30px;
+  --spacing-xxl: 40px;
+  --border-radius: 8px;
+
+  /* НОВОЕ: Переменные для адаптивных отступов и шрифтов */
+  --mobile-padding-x: 15px;
+  --mobile-padding-y: 20px;
+  --mobile-font-size-base: 0.9rem;
+}
+
+/* --- ОБЩИЙ СБРОС И ШРИФТЫ --- */
+body, html, #root, .app-layout {
+  height: 100%;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+}
+body {
+  font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, 'Open Sans', 'Helvetica Neue', sans-serif;
+  background-color: var(--color-bg-light);
+  color: var(--color-text-dark);
+  font-size: var(--mobile-font-size-base); /* Мобильный First */
+}
+
+/* --- ОСНОВНОЙ МАКЕТ ПРИЛОЖЕНИЯ --- */
+.app-layout { /* Уже настроен выше */ }
+.main-nav {
+  flex-shrink: 0;
+  background-color: var(--color-bg-white);
+  padding: 0 var(--mobile-padding-x); /* Адаптивный паддинг */
+  display: flex;
+  justify-content: center;
+  box-shadow: 0 2px 4px var(--color-shadow);
+  border-bottom: 1px solid var(--color-border-light);
+  overflow-x: auto; /* Если ссылки не помещаются, можно скроллить */
+}
+.main-nav a {
+  color: var(--color-text-dark); padding: 14px 10px; /* Уменьшаем паддинг на мобилке */
+  text-decoration: none;
+  font-weight: 500; border-bottom: 3px solid transparent; transition: all 0.2s;
+  white-space: nowrap; /* Не переносить текст ссылки */
+}
+.main-nav a:hover { background-color: var(--color-bg-light); }
+.main-nav a.active { color: var(--color-primary); border-bottom-color: var(--color-primary); }
+
+/* ГЛАВНЫЙ КОНТЕЙНЕР ДЛЯ ВСЕХ СТРАНИЦ (main-content-area) */
+.main-content-area {
+  flex-grow: 1;
+  display: flex; /* Мобильный First: одна колонка по умолчанию */
+  flex-direction: column;
+  padding: var(--mobile-padding-y) var(--mobile-padding-x); /* Адаптивный паддинг */
+  gap: var(--spacing-md); /* Уменьшаем гап на мобилке */
+  overflow: auto; /* Разрешаем скролл для всего контента на мобилке */
+}
+
+/* --- ОПРЕДЕЛЕНИЕ МАКЕТОВ СТРАНИЦ --- */
+/* Мобильный First: все в одну колонку по умолчанию */
+.layout-generator { flex-direction: column; }
+.layout-builder { flex-direction: column; }
+.layout-default { flex-direction: column; }
+
+
+/* --- ОБЩИЕ СТИЛИ ДЛЯ КОЛОНОК И КОМПОНЕНТОВ (адаптивные) --- */
+
+.template-manager-column, .builder-sidebar {
+  background-color: var(--color-bg-white);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md); /* Уменьшаем паддинг на мобилке */
+  overflow-y: auto;
+  box-shadow: 0 2px 8px var(--color-shadow-light);
+  min-height: auto; /* Для мобильных - нет жесткого min-height */
+  flex-shrink: 0; /* Не сжимать сайдбар */
+}
+
+.generator-form, .builder-main-content {
+  background-color: var(--color-bg-white);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md); /* Уменьшаем паддинг на мобилке */
+  display: flex;
+  flex-direction: column;
+  overflow-y: auto;
+  box-shadow: 0 2px 8px var(--color-shadow-light);
+  min-height: auto; /* Для мобильных - нет жесткого min-height */
+  flex-grow: 1; /* Занимает доступное пространство */
+}
+
+/* Вложенная сетка для Builder: Редактор и Инструменты */
+.builder-main-content {
+  display: flex; /* Мобильный: сначала основной редактор, потом тулбокс */
+  flex-direction: column;
+  gap: var(--spacing-md);
+  padding: 0;
+  background: none;
+  box-shadow: none;
+}
+.builder-main-editor, .builder-toolbox {
+  background-color: var(--color-bg-white);
+  border-radius: var(--border-radius);
+  padding: var(--spacing-md); /* Уменьшаем паддинг на мобилке */
+  overflow-y: auto;
+  box-shadow: 0 2px 8px var(--color-shadow-light);
+  min-height: auto;
+  flex-shrink: 0; /* Чтобы не сжимались */
+}
+
+/* Заставляем Markdown редактор расти по высоте */
+.builder-main-editor .form-field:nth-child(2) {
+  flex-grow: 1;
+  display: flex;
+  flex-direction: column;
+}
+.builder-main-editor .CodeMirror {
+  flex-grow: 1;
+  min-height: 200px !important; /* Уменьшаем min-height для мобильных */
+}
+.builder-main-editor .save-section {
+  margin-top: auto;
+  padding-top: var(--spacing-lg);
+  flex-shrink: 0;
+}
+
+
+/* --- ОБЩИЕ СТИЛИ ЭЛЕМЕНТОВ ФОРМЫ --- */
+h2 {
+  text-align: left;
+  margin: 0 0 var(--spacing-md) 0; /* Уменьшаем отступ */
+  padding-bottom: var(--spacing-sm); /* Уменьшаем отступ */
+  border-bottom: 1px solid var(--color-border-light);
+  font-size: 1.3em; /* Чуть меньше на мобилке */
+}
+.form-field { margin-bottom: var(--spacing-md); } /* Уменьшаем отступ */
+.form-field label { display: block; font-weight: 600; margin-bottom: var(--spacing-sm); }
+
+input:not([type="checkbox"]),
+select,
+textarea,
+#template-select {
+  width: 100%;
+  padding: 10px; /* Уменьшаем паддинг */
+  border: 1px solid var(--color-border-medium);
+  border-radius: var(--border-radius);
+  font-size: 0.95rem; /* Чуть меньше шрифт */
+  box-sizing: border-box;
+  font-family: inherit;
+  background-color: var(--color-input-bg);
+  -webkit-appearance: none;
+  -moz-appearance: none;
+  appearance: none;
+}
+
+select {
+  background-image: url("data:image/svg+xml,%3csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3e%3cpath fill='none' stroke='%23343a40' stroke-linecap='round' stroke-linejoin='round' stroke-width='2' d='m2 5 6 6 6-6'/%3e%3c/svg%3e");
+  background-repeat: no-repeat;
+  background-position: right 0.75rem center;
+  background-size: 16px 12px;
+  padding-right: 2.5rem;
+}
+
+input:focus, select:focus, textarea:focus, #template-select:focus {
+  outline: none; border-color: var(--color-primary); box-shadow: 0 0 0 3px var(--color-active-bg);
+}
+
+.result-container {
+  margin-top: var(--spacing-xl); /* Увеличиваем отступ, чтобы отделить */
+  border-top: 1px solid var(--color-border-light);
+  padding-top: var(--spacing-lg);
+}
+.result-container h3 {
+  margin-top: 0;
+  font-size: 1.3em; /* Меньше на мобилке */
+}
+
+/* --- СТИЛИ ДЛЯ КОМПОНЕНТА TEMPLATEMANAGER --- */
+.template-manager { /* Стилизуется через .template-manager-column или .builder-sidebar */ }
+.category-group summary { font-size: 1em; font-weight: bold; cursor: pointer; padding: 8px 0; }
+.category-group ul { list-style-type: none; padding-left: var(--spacing-md); margin: 0; }
+.category-group li { padding: 8px; border-radius: var(--border-radius); cursor: pointer; display: flex; justify-content: space-between; align-items: center; transition: background-color 0.2s; }
+.template-name { white-space: normal; /* Разрешаем перенос текста на мобилке */ overflow: visible; text-overflow: clip; /* Отключаем обрезание */ }
+.delete-template-btn { font-size: 1.2em; /* Меньше на мобилке */ }
+
+
+/* --- СТИЛИ ДЛЯ ПАНЕЛИ ИНСТРУМЕНТОВ (BUILDER TOOLBOX) --- */
+.toolbox-section { border: 1px solid var(--color-border-light); border-radius: var(--border-radius); margin-bottom: var(--spacing-md); }
+.toolbox-section summary { font-weight: bold; cursor: pointer; padding: var(--spacing-md); }
+.toolbox-section[open] summary { border-bottom: 1px solid var(--color-border-light); }
+.toolbox-content { padding: var(--spacing-md); }
+
+/* Карточки полей/селекторов в тулбоксе */
+.builder-item { border: 1px solid #e5e5e5; border-radius: var(--border-radius); padding: 8px; margin-bottom: 8px; background-color: var(--color-bg-white); }
+.builder-item-header { display: flex; align-items: center; gap: 5px; flex-wrap: wrap; /* Разрешаем перенос на новую строку */ }
+.builder-item-header input { flex-grow: 1; border: none; padding: 5px; background: var(--color-bg-light); border-radius: 4px; font-size: 0.9em; /* Меньше на мобилке */ }
+.builder-item-details { overflow: hidden; max-height: 0; transition: max-height 0.3s ease-out; margin-top: 0; }
+.builder-item.expanded .builder-item-details { max-height: 500px; margin-top: var(--spacing-md); }
+.form-field.small-margin { margin-bottom: 10px; }
+
+/* Общие стили для кнопок управления (развернуть, вставить, удалить) */
+.expand-button, .insert-button, .remove-button { width: 24px; height: 24px; font-size: 1em; } /* Меньше на мобилке */
+
+
+/* Кнопки добавления (в полях/селекторах) и сохранения */
+.add-button { padding: 10px; font-size: 0.9rem; } /* Меньше на мобилке */
+.save-button, .copy-button { padding: 12px; font-size: 1rem; } /* Меньше на мобилке */
+
+
+/* --- СВОРАЧИВАЕМЫЙ ФУТЕР (ЛИПКИЙ БЛОК В КОНСТРУКТОРЕ) --- */
+.builder-result-sticky {
+  position: fixed; bottom: 0; left: 0; width: 100%;
+  background-color: var(--color-bg-white); box-shadow: 0 -2px 10px var(--color-shadow);
+  border-top: 1px solid var(--color-border-light); z-index: 100;
+  transition: max-height 0.4s ease-in-out;
+  max-height: 50px; /* Высота свёрнутого состояния на мобилке */
+  overflow: hidden;
+}
+.builder-result-sticky.expanded { max-height: 250px; /* Макс высота на мобилке */ }
+.sticky-footer-header {
+  display: flex; justify-content: space-between; align-items: center;
+  padding: 0 var(--mobile-padding-x); /* Адаптивный паддинг */
+  height: 50px; /* Высота заголовка на мобилке */
+  font-weight: 500; flex-shrink: 0;
+  font-size: 0.9rem; /* Меньше на мобилке */
+}
+.footer-toggle-icon { font-size: 1.2em; /* Меньше на мобилке */ }
+
+.sticky-footer-content {
+  height: calc(250px - 50px); /* Полная высота минус высота заголовка */
+  display: flex; flex-direction: column;
+}
+.preview-tabs { display: flex; border-bottom: 1px solid var(--color-border-light); padding: 0 var(--mobile-padding-x); flex-shrink: 0; }
+.preview-tabs button { padding: 8px 12px; font-size: 0.9rem; } /* Меньше на мобилке */
+
+.preview-content { padding: var(--spacing-md) var(--mobile-padding-x); /* Адаптивный паддинг */ overflow-y: auto; flex-grow: 1; }
+.preview-content pre { padding: var(--spacing-md); font-size: 0.85em; /* Меньше на мобилке */ }
+
+
+/* --- РЕДАКТОР MARKDOWN (SimpleMDE) --- */
+.editor-toolbar { border-radius: var(--border-radius) var(--border-radius) 0 0; }
+.CodeMirror { min-height: 200px !important; font-size: 14px !important; line-height: 1.5 !important; padding: var(--spacing-sm) !important; } /* Меньше на мобилке */
+
+
+/* --- МОДАЛЬНОЕ ОКНО (RichTextManagerModal.jsx) --- */
+.modal-content { 
+  max-width: 95%; /* Увеличиваем ширину на мобилке */
+  width: 95%; 
+  max-height: 95vh; /* Увеличиваем высоту на мобилке */
+  padding: var(--spacing-md); /* Меньше паддинг */
+}
+.modal-header h2 { font-size: 1.3em; /* Меньше на мобилке */ }
+.close-button { font-size: 1.5em; /* Меньше на мобилке */ }
+.modal-body { 
+  display: flex; /* Мобильный: колонки друг под другом */
+  flex-direction: column; 
+  gap: var(--spacing-md); /* Меньше гап */
+}
+.rich-text-list h3 { font-size: 1.1em; margin-bottom: var(--spacing-sm); } /* Меньше на мобилке */
+.rich-text-list li { padding: var(--spacing-sm); font-size: 0.9em; } /* Меньше на мобилке */
+.rich-text-editor-form { /* Стилизуется отдельно */ }
+.rich-text-editor-form h3 { font-size: 1.1em; margin-bottom: var(--spacing-sm); } /* Меньше на мобилке */
+.rich-text-editor-form .save-btn, .rich-text-editor-form .cancel-btn { padding: 10px 15px; font-size: 0.85rem; } /* Меньше на мобилке */
+
+
+/* --- СТИЛИ ДЛЯ ГРУППЫ ЧЕКБОКСОВ (ПРАВИЛЬНЫЕ) --- */
+.form-field.checkbox-group-fieldset { padding: var(--spacing-sm); margin-bottom: var(--spacing-md); }
+.form-field.checkbox-group-fieldset legend { font-size: 0.95rem; } /* Меньше на мобилке */
+.checkbox-group-container { gap: 10px; }
+.checkbox-item { gap: 8px; }
+.checkbox-item input[type="checkbox"] { width: 1.1em; height: 1.1em; } /* Меньше на мобилке */
+.checkbox-item label { font-size: 0.9rem; } /* Меньше на мобилке */
+
+
+/* --- JSON-блок в Builder --- */
+.json-display-section {
+  padding: var(--spacing-md); /* Меньше паддинг */
+}
+.json-display-section h3 { font-size: 1.1em; } /* Меньше на мобилке */
+.json-code-block { font-size: 0.8em; } /* Меньше на мобилке */
+
+
+/* --- Стили для редактора Rich-опций в конструкторе --- */
+.rich-options-editor { gap: 10px; }
+.rich-option-item-details { padding: 8px; }
+.rich-option-summary input[type="text"] { font-size: 0.9em; padding: 3px; } /* Меньше на мобилке */
+.edit-rich-text-btn, .browse-rich-text-btn, .remove-button.small-btn { width: 24px; height: 24px; font-size: 0.9em; } /* Меньше на мобилке */
+.rich-option-content-preview textarea { font-size: 0.8em; } /* Меньше на мобилке */
+
+/* --- АДАПТИВНОСТЬ: Медиа-запросы --- */
+
+/* Планшеты и большие мобильные устройства (>= 600px) */
+@media (min-width: 600px) {
+  body {
+    font-size: 1rem; /* Базовый размер шрифта для планшетов */
+  }
+  .main-nav a {
+    padding: 14px 15px; /* Увеличиваем паддинг */
+  }
+  .main-content-area {
+    padding: var(--spacing-lg); /* Отступы для планшетов */
+    gap: var(--spacing-lg);
+  }
+  h2, .result-container h3 {
+    font-size: 1.4em;
+  }
+  .add-button, .save-button, .copy-button {
+    font-size: 1rem;
+  }
+  .builder-result-sticky {
+    max-height: 60px; /* Вернуть высоту для планшетов */
+  }
+  .builder-result-sticky.expanded {
+    max-height: 350px; /* Вернуть высоту для планшетов */
+  }
+  .sticky-footer-header {
+    height: 60px;
+    font-size: 1rem;
+  }
+  .sticky-footer-content {
+    height: calc(350px - 60px);
+  }
+  .preview-tabs button {
+    padding: 10px 15px;
+    font-size: 1rem;
+  }
+  .CodeMirror {
+    min-height: 300px !important;
+    font-size: 15px !important;
+  }
+  .modal-content {
+    max-width: 800px;
+    width: 90%;
+    padding: var(--spacing-xl);
+  }
+  .modal-header h2 {
+    font-size: 1.5em;
+  }
+  .close-button {
+    font-size: 2em;
+  }
+  .rich-text-list h3, .rich-text-editor-form h3 {
+    font-size: 1.2em;
+  }
+  .rich-text-list li {
+    padding: var(--spacing-sm);
+    font-size: 1rem;
+  }
+  .rich-text-editor-form .save-btn, .rich-text-editor-form .cancel-btn {
+    padding: 12px 20px;
+    font-size: 0.9rem;
+  }
+}
+
+
+/* Десктопы (>= 1024px) */
+@media (min-width: 1024px) {
+  .main-nav {
+    padding: 0 var(--spacing-xxl); /* Большие отступы для десктопов */
+  }
+  .main-nav a {
+    padding: 14px 20px; /* Стандартный паддинг */
+  }
+  .main-content-area {
+    display: grid; /* Возвращаем Grid для десктопов */
+    padding: var(--spacing-xl); /* Стандартные отступы */
+    gap: var(--spacing-xl); /* Стандартный гап */
+  }
+
+  /* Макеты для десктопов */
+  .layout-generator { grid-template-columns: 320px 1fr; } /* Две колонки */
+  .layout-builder { grid-template-columns: 320px 1fr; } /* Две колонки */
+  .layout-default { grid-template-columns: 1fr; } /* Одна колонка */
+
+  /* Вложенная сетка для Builder: Редактор и Инструменты */
+  .builder-main-content {
+    display: grid; /* Возвращаем Grid */
+    grid-template-columns: 3fr 2fr; /* Редактор доминирует */
+    gap: var(--spacing-xl);
+    padding: 0;
+  }
+
+  .template-manager-column, .builder-sidebar {
+    padding: var(--spacing-lg); /* Стандартный паддинг */
+    min-height: 0; /* Важно для грида */
+  }
+  .generator-form, .builder-main-editor, .builder-toolbox {
+    padding: var(--spacing-xl); /* Стандартный паддинг */
+    min-height: 0; /* Важно для грида */
+  }
+
+  h2 {
+    margin: 0 0 var(--spacing-lg) 0;
+    padding-bottom: var(--spacing-md);
+    font-size: 1.5em; /* Стандартный размер */
+  }
+  .form-field {
+    margin-bottom: var(--spacing-lg);
+  }
+  input:not([type="checkbox"]), select, textarea, #template-select {
+    padding: 12px;
+    font-size: 1rem;
+  }
+  .result-container {
+    margin-top: 30px;
+    padding-top: 20px;
+  }
+  .result-container h3 {
+    font-size: 1.5em;
+  }
+  .template-manager .category-group summary, .template-manager .category-group li {
+    padding: 10px 0;
+    font-size: 1.1em;
+  }
+  .delete-template-btn {
+    font-size: 1.5em;
+  }
+
+  .builder-item {
+    padding: 10px;
+    margin-bottom: 10px;
+  }
+  .builder-item-header input {
+    font-size: 1rem;
+  }
+  .expand-button, .insert-button, .remove-button {
+    width: 28px;
+    height: 28px;
+    font-size: 1.2em;
+  }
+
+  .add-button { padding: 12px; font-size: 1rem; }
+  .save-button, .copy-button { padding: 15px; font-size: 1.1rem; }
+
+  .CodeMirror {
+    min-height: 400px !important; /* Стандартная высота */
+    font-size: 16px !important;
+    padding: var(--spacing-md) !important;
+  }
+
+  .modal-body {
+    display: grid; /* Возвращаем Grid */
+    grid-template-columns: 1fr 1.5fr; /* Две колонки */
+    gap: var(--spacing-xl);
+  }
+
+  .rich-text-list h3, .rich-text-editor-form h3 {
+    font-size: 1.5em;
+    margin-bottom: var(--spacing-xl);
+  }
+  .rich-text-list li {
+    padding: 10px;
+    font-size: 1rem;
+  }
+  .rich-text-editor-form .save-btn, .rich-text-editor-form .cancel-btn {
+    padding: var(--spacing-sm) var(--spacing-md);
+    font-size: 0.9rem;
+  }
+
+  .form-field.checkbox-group-fieldset { padding: var(--spacing-md); }
+  .form-field.checkbox-group-fieldset legend { font-size: 1rem; }
+  .checkbox-group-container { gap: 12px; }
+  .checkbox-item { gap: 10px; }
+  .checkbox-item input[type="checkbox"] { width: 1.2em; height: 1.2em; }
+  .checkbox-item label { font-size: 1rem; }
+
+  .json-display-section {
+    padding: var(--spacing-lg);
+  }
+  .json-display-section h3 { font-size: 1.2em; }
+  .json-code-block { font-size: 0.9em; }
+
+  .rich-options-editor { gap: 15px; }
+  .rich-option-item-details { padding: 10px; }
+  .rich-option-summary input[type="text"] { font-size: 1rem; padding: 5px; }
+  .edit-rich-text-btn, .browse-rich-text-btn, .remove-button.small-btn { width: 28px; height: 28px; font-size: 1.2em; }
+  .rich-option-content-preview textarea { font-size: 0.85em; }
+}
+
+/* Стилизация полосы прокрутки для WebKit браузеров (Chrome, Safari, Edge) */
+::-webkit-scrollbar { width: 8px; height: 8px; }
+::-webkit-scrollbar-track { background: #f1f1f1; border-radius: 10px; }
+::-webkit-scrollbar-thumb { background: #888; border-radius: 10px; }
+::-webkit-scrollbar-thumb:hover { background: #555; }
