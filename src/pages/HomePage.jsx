@@ -1,76 +1,50 @@
-// src/pages/HomePage.jsx - АКТУАЛЬНАЯ ПОЛНАЯ ВЕРСИЯ
+// src/pages/HomePage.jsx - УПРОЩЕННАЯ ВЕРСИЯ
 
-import { useGoogleLogin } from '@react-oauth/google';
+import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios'; // Убедитесь, что axios установлен: npm install axios
-import './HomePage.css'; // Убедитесь, что этот файл стилей существует
+import { getAuth, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+import './HomePage.css';
 
-// Компонент принимает user (объект пользователя) и setUser (функция для его установки) из App.jsx
 export default function HomePage({ user, setUser }) {
   const navigate = useNavigate();
+  const auth = getAuth();
 
-  // Используем хук из библиотеки @react-oauth/google
-  const login = useGoogleLogin({
-    // Эта функция автоматически вызывается при успешном входе в Google
-    onSuccess: async (tokenResponse) => {
-      try {
-        // Получив токен доступа, мы делаем запрос к Google API, чтобы получить информацию о пользователе
-        const userInfo = await axios.get(
-          'https://www.googleapis.com/oauth2/v3/userinfo',
-          {
-            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
-          }
-        );
-        
-        // userInfo.data будет содержать объект вида:
-        // { sub: "123...", name: "...", given_name: "...", picture: "...", email: "..." }
-        // Мы сохраняем весь этот объект в глобальном состоянии нашего приложения
-        setUser(userInfo.data);
+  const handleLoginSuccess = async (credentialResponse) => {
+    try {
+      const idToken = credentialResponse.credential;
+      const credential = GoogleAuthProvider.credential(idToken);
+      // Просто входим в Firebase. Слушатель в App.jsx сделает все остальное.
+      await signInWithCredential(auth, credential);
+      // Навигация теперь происходит в слушателе в App.jsx
+    } catch (error) {
+      console.error("Ошибка при входе в Firebase:", error);
+      alert("Произошла ошибка аутентификации. Пожалуйста, попробуйте еще раз.");
+    }
+  };
 
-        // После успешного входа и получения данных, перенаправляем пользователя на страницу генератора
-        navigate('/generator');
+  const handleLoginError = () => {
+    console.error('Ошибка входа через Google');
+    alert("Не удалось войти. Пожалуйста, попробуйте еще раз.");
+  };
 
-      } catch (error) {
-        console.error("Ошибка при получении данных пользователя:", error);
-        alert("Не удалось получить информацию о пользователе. Попробуйте еще раз.");
-      }
-    },
-    // Эта функция вызывается, если пользователь закрыл окно входа или произошла ошибка
-    onError: () => {
-      console.error('Ошибка входа через Google');
-      alert("Произошла ошибка при входе. Пожалуйста, попробуйте еще раз.");
-    },
-  });
-
-  // Функция для выхода из системы
   const logout = () => {
-    // Просто очищаем глобальное состояние пользователя
-    setUser(null);
-    // Можно также перенаправить на главную страницу, если пользователь вышел не с нее
+    // Выход из Firebase
+    getAuth().signOut();
+    setUser(null); // Дополнительно очищаем состояние
     navigate('/');
   };
 
-  // --- Условный рендеринг ---
-
-  // Если пользователь УЖЕ вошел в систему (объект user существует)
   if (user) {
+    // Этот блок теперь в основном для кнопки "Выйти"
     return (
       <div className="home-container">
         <div className="card">
-          <img 
-            src={user.picture || '/default-avatar.png'} 
-            alt="User Avatar" 
-            className="avatar"
-          />
-          <h1>Добро пожаловать, {user.name}!</h1>
-          <p>Вы вошли как <strong>{user.email}</strong>.</p>
-          <p className="subtitle">Теперь вы можете создавать и сохранять свои промты. Они будут доступны только вам.</p>
+          <img src={user.picture} alt="User Avatar" className="avatar"/>
+          <h1>Вы уже вошли в систему</h1>
+          <p>Перейдите в рабочую область или выйдите из аккаунта.</p>
           <div className="button-group">
-            <button 
-              className="button-primary" 
-              onClick={() => navigate('/generator')}
-            >
-              К моим промтам
+            <button className="button-primary" onClick={() => navigate('/generator')}>
+              К Генератору
             </button>
             <button className="button-secondary" onClick={logout}>
               Выйти
@@ -81,19 +55,17 @@ export default function HomePage({ user, setUser }) {
     );
   }
 
-  // Если пользователь НЕ вошел в систему (user равен null)
   return (
     <div className="home-container">
        <div className="card">
           <h1>Система создания и хранения промтов</h1>
           <p className="subtitle">Войдите в свой аккаунт, чтобы сохранять шаблоны и управлять своей персональной библиотекой промтов.</p>
-          <button 
-            className="button-google" 
-            onClick={() => login()} // При клике вызываем функцию login из хука
-          >
-            <img src="/google-logo.svg" alt="Google logo" />
-            Войти через Google
-          </button>
+          <div className="google-login-button-container">
+            <GoogleLogin
+              onSuccess={handleLoginSuccess}
+              onError={handleLoginError}
+            />
+          </div>
        </div>
     </div>
   );
