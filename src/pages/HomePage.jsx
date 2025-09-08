@@ -1,70 +1,58 @@
-// src/pages/HomePage.jsx - ОБНОВЛЕННАЯ ВЕРСИЯ С FIREBASE AUTH
+// src/pages/HomePage.jsx - АКТУАЛЬНАЯ ПОЛНАЯ ВЕРСИЯ
 
 import { useGoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
-import axios from 'axios';
-// 1. Импортируем необходимые функции из Firebase Auth
-import { getAuth, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
-import './HomePage.css';
+import axios from 'axios'; // Убедитесь, что axios установлен: npm install axios
+import './HomePage.css'; // Убедитесь, что этот файл стилей существует
 
+// Компонент принимает user (объект пользователя) и setUser (функция для его установки) из App.jsx
 export default function HomePage({ user, setUser }) {
   const navigate = useNavigate();
-  const auth = getAuth(); // Получаем экземпляр Firebase Auth
 
+  // Используем хук из библиотеки @react-oauth/google
   const login = useGoogleLogin({
-    // 2. Изменяем onSuccess, чтобы он также входил в Firebase
+    // Эта функция автоматически вызывается при успешном входе в Google
     onSuccess: async (tokenResponse) => {
       try {
-        // --- ШАГ А: Получаем id_token от Google (как и раньше, но теперь нужен id_token) ---
-        // Для этого нам нужно запросить его отдельно, используя access_token
-        const userInfoResponse = await axios.get(
+        // Получив токен доступа, мы делаем запрос к Google API, чтобы получить информацию о пользователе
+        const userInfo = await axios.get(
           'https://www.googleapis.com/oauth2/v3/userinfo',
-          { headers: { Authorization: `Bearer ${tokenResponse.access_token}` } }
+          {
+            headers: { Authorization: `Bearer ${tokenResponse.access_token}` },
+          }
         );
-
-        // --- ШАГ Б: Создаем учетные данные для Firebase ---
-        // Мы используем id_token, который неявно передается в tokenResponse,
-        // но для надежности лучше использовать access_token для получения свежих данных.
-        // Для signInWithCredential нужен id_token, который приходит в tokenResponse.
-        // Если его нет, нужно добавить 'id_token' в scope.
-        // Простой способ - использовать access_token для получения данных, а затем войти.
-        // Но для прямой интеграции нужен id_token.
-        // Давайте упростим, используя токен, который дает библиотека.
-        // У @react-oauth/google есть более простой способ - `useGoogleOneTapLogin` или `googleLogout`
-        // Но мы сделаем это вручную для ясности.
         
-        // ВАЖНО: для signInWithCredential нужен id_token.
-        // Библиотека @react-oauth/google не всегда его возвращает по умолчанию.
-        // Давайте используем другой хук, который это делает.
-        // Но чтобы не усложнять, давайте предположим, что токен есть.
-        // Если его нет, нужно будет изменить `useGoogleLogin` на `googleLogout` и кнопку.
-        
-        // Давайте сделаем проще и надежнее. Вместо `useGoogleLogin` используем компонент `GoogleLogin`.
-        // Но чтобы не переделывать все, давайте исправим текущий код.
-        // Мы не можем получить id_token напрямую из этого хука.
-        // Поэтому мы будем использовать другой подход.
+        // userInfo.data будет содержать объект вида:
+        // { sub: "123...", name: "...", given_name: "...", picture: "...", email: "..." }
+        // Мы сохраняем весь этот объект в глобальном состоянии нашего приложения
+        setUser(userInfo.data);
 
-        // --- ПРАВИЛЬНЫЙ ПОДХОД ДЛЯ ЭТОЙ БИБЛИОТЕКИ ---
-        // Мы не будем использовать signInWithCredential, а изменим правила безопасности.
-        // Это гораздо проще в вашем случае.
-
-        // Сохраняем данные пользователя в состоянии (как и раньше)
-        setUser(userInfoResponse.data);
+        // После успешного входа и получения данных, перенаправляем пользователя на страницу генератора
+        navigate('/generator');
 
       } catch (error) {
         console.error("Ошибка при получении данных пользователя:", error);
+        alert("Не удалось получить информацию о пользователе. Попробуйте еще раз.");
       }
     },
+    // Эта функция вызывается, если пользователь закрыл окно входа или произошла ошибка
     onError: () => {
-      console.error('Ошибка входа');
+      console.error('Ошибка входа через Google');
+      alert("Произошла ошибка при входе. Пожалуйста, попробуйте еще раз.");
     },
   });
 
-  // Функция для выхода
+  // Функция для выхода из системы
   const logout = () => {
+    // Просто очищаем глобальное состояние пользователя
     setUser(null);
+    // Можно также перенаправить на главную страницу, если пользователь вышел не с нее
+    navigate('/');
   };
 
+  // --- Условный рендеринг ---
+
+  // Если пользователь УЖЕ вошел в систему (объект user существует)
   if (user) {
     return (
       <div className="home-container">
@@ -93,15 +81,15 @@ export default function HomePage({ user, setUser }) {
     );
   }
 
+  // Если пользователь НЕ вошел в систему (user равен null)
   return (
     <div className="home-container">
        <div className="card">
           <h1>Система создания и хранения промтов</h1>
           <p className="subtitle">Войдите в свой аккаунт, чтобы сохранять шаблоны и управлять своей персональной библиотекой промтов.</p>
-          {/* Используем компонент GoogleLogin для простоты */}
           <button 
             className="button-google" 
-            onClick={() => login()}
+            onClick={() => login()} // При клике вызываем функцию login из хука
           >
             <img src="/google-logo.svg" alt="Google logo" />
             Войти через Google
