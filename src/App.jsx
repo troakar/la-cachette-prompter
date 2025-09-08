@@ -1,67 +1,77 @@
-// src/App.jsx - ФИНАЛЬНАЯ ВЕРСИЯ С СЛУШАТЕЛЕМ AUTH
+// src/App.jsx - ФИНАЛЬНАЯ ВЕРСИЯ С ВОССТАНОВЛЕННЫМ МЕНЮ
 
-import { useState, useEffect } from 'react'; // Добавлен useEffect
-import { Routes, Route, NavLink, useLocation, useNavigate } from 'react-router-dom'; // Добавлен useNavigate
+import { useState, useEffect } from 'react';
+import { Routes, Route, NavLink, useLocation, useNavigate } from 'react-router-dom';
 import Generator from './pages/Generator';
 import Builder from './pages/Builder';
 import HomePage from './pages/HomePage';
 import ProtectedRoute from './components/ProtectedRoute';
-import { getAuth, onAuthStateChanged } from 'firebase/auth'; // Импортируем слушателя
+import { getAuth, onAuthStateChanged } from 'firebase/auth';
 import './App.css';
 
 function App() {
   const location = useLocation();
   const navigate = useNavigate();
   const [user, setUser] = useState(null);
-  const [authLoading, setAuthLoading] = useState(true); // Состояние для первоначальной проверки
+  const [authLoading, setAuthLoading] = useState(true);
 
-  // Этот useEffect сработает один раз при загрузке приложения
   useEffect(() => {
     const auth = getAuth();
-    // Устанавливаем слушателя. Он будет активен все время работы приложения.
     const unsubscribe = onAuthStateChanged(auth, (firebaseUser) => {
       if (firebaseUser) {
-        // Если пользователь вошел (или уже был залогинен с прошлого раза)
         setUser({
           sub: firebaseUser.uid,
           name: firebaseUser.displayName,
           email: firebaseUser.email,
           picture: firebaseUser.photoURL,
         });
-        // Если пользователь на главной, перенаправляем его внутрь
         if (location.pathname === '/') {
           navigate('/generator');
         }
       } else {
-        // Если пользователь вышел
         setUser(null);
+        // Если пользователь вышел, перенаправляем его на главную
+        navigate('/');
       }
-      // Первоначальная проверка завершена, можно показывать интерфейс
       setAuthLoading(false);
     });
 
-    // Отписываемся от слушателя при размонтировании компонента
     return () => unsubscribe();
-  }, [navigate, location.pathname]); // Добавляем зависимости
+  }, [navigate, location.pathname]);
 
   const getLayoutClass = () => {
-    // ... ваш код ...
+    switch (location.pathname) {
+      case '/generator':
+        return 'layout-generator';
+      case '/builder':
+        return 'layout-builder';
+      default:
+        return 'layout-default';
+    }
   };
 
-  // Пока идет проверка, ничего не показываем, чтобы избежать ошибок
   if (authLoading) {
-    return <div className="loading-fullscreen">Проверка аутентификации...</div>;
+    // Можно добавить стили для этого элемента
+    return <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100vh' }}>Проверка аутентификации...</div>;
   }
 
   return (
     <div className="app-layout">
+      {/* --- ВОТ ИСПРАВЛЕННЫЙ БЛОК НАВИГАЦИИ --- */}
       <nav className="main-nav">
-        {/* ... ваш код навигации ... */}
+        <NavLink to="/">Главная</NavLink>
+        {user && (
+          <>
+            <NavLink to="/generator">Генератор</NavLink>
+            <NavLink to="/builder">Конструктор шаблонов</NavLink>
+          </>
+        )}
+        {user && <span className="user-nav-info">Привет, {user.name}!</span>}
       </nav>
 
       <main className={`main-content-area ${getLayoutClass()}`}>
         <Routes>
-          <Route path="/" element={<HomePage user={user} setUser={setUser} />} />
+          <Route path="/" element={<HomePage user={user} />} />
           <Route element={<ProtectedRoute user={user} />}>
             <Route path="/generator" element={<Generator user={user} />} />
             <Route path="/builder" element={<Builder user={user} />} />
