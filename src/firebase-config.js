@@ -2,19 +2,15 @@
 import { initializeApp } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
-// ВАЖНО: Перенесите эти ключи в переменные окружения!
 const firebaseConfig = {
-  apiKey: "AIzaSyDrtF0JVYttXpp8nfsbeeiMpbraGfTUi4k",
-  authDomain: "troakar-prompt-manager.firebaseapp.com",
-  projectId: "troakar-prompt-manager",
-  storageBucket: "troakar-prompt-manager.firebasestorage.app",
-  messagingSenderId: "990600187347",
-  appId: "1:990600187347:web:3e150bd2100bc0c6493326",
-  measurementId: "G-1F1W3QSD4F"
+  apiKey: import.meta.env.VITE_FIREBASE_API_KEY,
+  authDomain: import.meta.env.VITE_FIREBASE_AUTH_DOMAIN,
+  projectId: import.meta.env.VITE_FIREBASE_PROJECT_ID,
+  storageBucket: import.meta.env.VITE_FIREBASE_STORAGE_BUCKET,
+  messagingSenderId: import.meta.env.VITE_FIREBASE_MESSAGING_SENDER_ID,
+  appId: import.meta.env.VITE_FIREBASE_APP_ID,
+  measurementId: import.meta.env.VITE_FIREBASE_MEASUREMENT_ID
 };
 
-// Инициализируем Firebase
 const app = initializeApp(firebaseConfig);
-
-// Экспортируем экземпляр Firestore для использования в других файлах
 export const db = getFirestore(app);
