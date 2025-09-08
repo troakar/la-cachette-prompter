@@ -10,5 +10,4 @@ export default NextAuth({
     }),
   ],
   // Можно добавить другие настройки, например, секретный ключ для сессий
-  secret: process.env.NEXTAUTH_SECRET,
 });
