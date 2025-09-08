@@ -1,41 +1,38 @@
-// src/pages/HomePage.jsx - УПРОЩЕННАЯ ВЕРСИЯ
+// src/pages/HomePage.jsx - ФИНАЛЬНАЯ ВЕРСИЯ С РОДНЫМ FIREBASE AUTH
 
-import { GoogleLogin } from '@react-oauth/google';
 import { useNavigate } from 'react-router-dom';
-import { getAuth, signInWithCredential, GoogleAuthProvider } from 'firebase/auth';
+// 1. Импортируем ТОЛЬКО функции из Firebase
+import { getAuth, signInWithPopup, GoogleAuthProvider } from 'firebase/auth';
 import './HomePage.css';
 
-export default function HomePage({ user, setUser }) {
+export default function HomePage({ user }) { // setUser больше не нужен здесь
   const navigate = useNavigate();
   const auth = getAuth();
 
-  const handleLoginSuccess = async (credentialResponse) => {
+  // 2. Создаем функцию для входа через Firebase
+  const handleGoogleSignIn = async () => {
+    const provider = new GoogleAuthProvider(); // Создаем провайдера Google
     try {
-      const idToken = credentialResponse.credential;
-      const credential = GoogleAuthProvider.credential(idToken);
-      // Просто входим в Firebase. Слушатель в App.jsx сделает все остальное.
-      await signInWithCredential(auth, credential);
-      // Навигация теперь происходит в слушателе в App.jsx
+      // 3. Запускаем весь процесс входа одной командой
+      // Она откроет pop-up, обработает вход и вернет результат
+      await signInWithPopup(auth, provider);
+      
+      // 4. ВСЁ! Нам больше ничего не нужно делать.
+      // Слушатель onAuthStateChanged в App.jsx автоматически обнаружит
+      // успешный вход, установит пользователя и перенаправит на /generator.
+
     } catch (error) {
-      console.error("Ошибка при входе в Firebase:", error);
-      alert("Произошла ошибка аутентификации. Пожалуйста, попробуйте еще раз.");
+      console.error("Ошибка входа через signInWithPopup:", error);
+      alert("Не удалось войти. Пожалуйста, проверьте всплывающие окна и попробуйте снова.");
     }
   };
 
-  const handleLoginError = () => {
-    console.error('Ошибка входа через Google');
-    alert("Не удалось войти. Пожалуйста, попробуйте еще раз.");
-  };
-
-  const logout = () => {
-    // Выход из Firebase
-    getAuth().signOut();
-    setUser(null); // Дополнительно очищаем состояние
-    navigate('/');
+  const handleLogout = () => {
+    auth.signOut(); // Выход из Firebase. Слушатель в App.jsx обработает остальное.
   };
 
   if (user) {
-    // Этот блок теперь в основном для кнопки "Выйти"
+    // Этот блок остается для тех, кто уже вошел
     return (
       <div className="home-container">
         <div className="card">
@@ -46,7 +43,7 @@ export default function HomePage({ user, setUser }) {
             <button className="button-primary" onClick={() => navigate('/generator')}>
               К Генератору
             </button>
-            <button className="button-secondary" onClick={logout}>
+            <button className="button-secondary" onClick={handleLogout}>
               Выйти
             </button>
           </div>
@@ -55,17 +52,19 @@ export default function HomePage({ user, setUser }) {
     );
   }
 
+  // Для неавторизованных пользователей
   return (
     <div className="home-container">
        <div className="card">
           <h1>Система создания и хранения промтов</h1>
           <p className="subtitle">Войдите в свой аккаунт, чтобы сохранять шаблоны и управлять своей персональной библиотекой промтов.</p>
-          <div className="google-login-button-container">
-            <GoogleLogin
-              onSuccess={handleLoginSuccess}
-              onError={handleLoginError}
-            />
-          </div>
+          <button 
+            className="button-google" 
+            onClick={handleGoogleSignIn} // 5. Кнопка теперь вызывает нашу новую функцию
+          >
+            <img src="/google-logo.svg" alt="Google logo" />
+            Войти через Google
+          </button>
        </div>
     </div>
   );
