@@ -1,42 +1,47 @@
-// src/pages/Generator.jsx
+// src/pages/Generator.jsx - ПОЛНАЯ ВЕРСИЯ ДЛЯ FIREBASE
 
 import { useState, useEffect, useRef } from 'react';
+import { NavLink } from 'react-router-dom'; // Добавлен импорт для ссылки
 import '../App.css';
 import { templates as builtInTemplates } from '../templates';
 import { getCustomTemplates, deleteCustomTemplate } from '../services/templateService';
-import TemplateManager from '../components/TemplateManager'; // <-- ИМПОРТ TemplateManager добавлен
+import TemplateManager from '../components/TemplateManager';
 
-function Generator() {
+function Generator({ user }) {
   const [templateTree, setTemplateTree] = useState([]);
   const [selectedTemplate, setSelectedTemplate] = useState(null);
   const [formValues, setFormValues] = useState({});
   const [generatedPrompt, setGeneratedPrompt] = useState('');
+  const [isLoading, setIsLoading] = useState(true);
 
   const dragItem = useRef(null);
   const dragOverItem = useRef(null);
 
-  const loadData = () => {
-    const customTemplates = getCustomTemplates().map(t => ({ id: t.id, name: t.prompt_name, data: t }));
+  const loadData = async () => {
+    if (!user) return;
+    setIsLoading(true);
+    
+    const customTemplatesData = await getCustomTemplates(user.email);
+    const customTemplates = customTemplatesData.map(t => ({ id: t.id, name: t.prompt_name, data: t }));
+
     const tree = [
       { id: 'built-in', name: 'Встроенные шаблоны', templates: builtInTemplates },
       { id: 'custom', name: 'Мои шаблоны', templates: customTemplates }
     ];
     setTemplateTree(tree);
-    const currentSelectedId = selectedTemplate ? selectedTemplate.id : null;
+
     const allTemplatesFlat = [...builtInTemplates, ...customTemplates];
+    const currentSelectedId = selectedTemplate ? selectedTemplate.id : null;
     const newSelected = allTemplatesFlat.find(t => t.id === currentSelectedId) || allTemplatesFlat[0] || null;
     setSelectedTemplate(newSelected);
+    setIsLoading(false);
   };
 
-  useEffect(() => { loadData(); }, []);
-
   useEffect(() => {
-    const handleStorageChange = (event) => {
-      if (event.key === 'customPromptTemplates') { loadData(); }
-    };
-    window.addEventListener('storage', handleStorageChange);
-    return () => { window.removeEventListener('storage', handleStorageChange); };
-  }, [selectedTemplate]);
+    if (user) {
+      loadData();
+    }
+  }, [user]);
 
   useEffect(() => {
     if (!selectedTemplate) return;
@@ -54,7 +59,10 @@ function Generator() {
   }, [selectedTemplate]);
 
   useEffect(() => {
-    if (!selectedTemplate) return;
+    if (!selectedTemplate) {
+      setGeneratedPrompt('');
+      return;
+    };
     let resultText = selectedTemplate.data.template;
     (selectedTemplate.data.fields || []).forEach(field => {
         const key = field.name;
@@ -87,10 +95,12 @@ function Generator() {
     if (found) { setSelectedTemplate(found); }
   };
 
-  const handleDeleteTemplate = (templateId) => {
-    if (deleteCustomTemplate(templateId)) {
-      if (selectedTemplate && selectedTemplate.id === templateId) { setSelectedTemplate(builtInTemplates[0] || null); }
-      loadData();
+  const handleDeleteTemplate = async (templateId) => {
+    const success = await deleteCustomTemplate(templateId, user.email);
+    if (success) {
+      await loadData();
+    } else {
+      alert('Ошибка при удалении шаблона.');
     }
   };
 
@@ -145,18 +155,13 @@ function Generator() {
     const draggedIndex = currentSelected.indexOf(draggedLabel);
     const dropTargetIndex = currentSelected.indexOf(dropTargetLabel);
 
-    if (draggedIndex === -1 || dropTargetIndex === -1) {
-        return;
-    }
+    if (draggedIndex === -1 || dropTargetIndex === -1) return;
 
     const newOrder = [...currentSelected];
     const [removed] = newOrder.splice(draggedIndex, 1);
     newOrder.splice(dropTargetIndex, 0, removed);
 
-    setFormValues(prev => ({
-        ...prev,
-        [fieldName]: newOrder
-    }));
+    setFormValues(prev => ({ ...prev, [fieldName]: newOrder }));
 
     dragItem.current = null;
     dragOverItem.current = null;
@@ -169,6 +174,14 @@ function Generator() {
     dragItem.current = null;
     dragOverItem.current = null;
   };
+
+  if (isLoading) {
+    return (
+        <div className="generator-form-placeholder">
+            <h2>Загрузка шаблонов...</h2>
+        </div>
+    );
+  }
 
   return (
     <>
@@ -190,39 +203,16 @@ function Generator() {
                     <fieldset className="form-field checkbox-group-fieldset" key={key}>
                       <legend>{field.label}</legend>
                       <div className="checkbox-group-container">
-                        {/* Сначала рендерим выбранные опции в их текущем порядке */}
                         {(formValues[field.name] || []).map((selectedLabel, index) => {
-                          const fieldOption = field.options.find(opt => 
-                              field.optionsType === 'rich' ? opt.label === selectedLabel : opt === selectedLabel
-                          );
+                          const fieldOption = field.options.find(opt => field.optionsType === 'rich' ? opt.label === selectedLabel : opt === selectedLabel);
                           const label = field.optionsType === 'rich' ? fieldOption.label : fieldOption;
-
                           return (
-                            <div 
-                              className="checkbox-item draggable-checkbox-item" 
-                              key={`${label}-${index}`} 
-                              draggable 
-                              onDragStart={(e) => handleDragStart(e, field.name, label)}
-                              onDragEnter={(e) => handleDragEnter(e, field.name, label)}
-                              onDragLeave={handleDragLeave}
-                              onDrop={handleDrop}
-                              onDragEnd={handleDragEnd}
-                              onDragOver={(e) => e.preventDefault()}
-                            >
-                              <input 
-                                type="checkbox" 
-                                id={`${field.name}-${label}`} 
-                                name={field.name} 
-                                value={label} 
-                                checked={true} 
-                                onChange={handleInputChange}
-                              />
+                            <div className="checkbox-item draggable-checkbox-item" key={`${label}-${index}`} draggable onDragStart={(e) => handleDragStart(e, field.name, label)} onDragEnter={(e) => handleDragEnter(e, field.name, label)} onDragLeave={handleDragLeave} onDrop={handleDrop} onDragEnd={handleDragEnd} onDragOver={(e) => e.preventDefault()}>
+                              <input type="checkbox" id={`${field.name}-${label}`} name={field.name} value={label} checked={true} onChange={handleInputChange}/>
                               <label htmlFor={`${field.name}-${label}`}>{label}</label>
                             </div>
                           );
                         })}
-                        
-                        {/* Затем рендерим невыбранные опции (без возможности Drag-and-Drop) */}
                         {(field.options || []).filter(option => {
                             const label = field.optionsType === 'rich' ? option.label : option;
                             return !(formValues[field.name] || []).includes(label);
@@ -230,14 +220,7 @@ function Generator() {
                             const label = field.optionsType === 'rich' ? option.label : option;
                             return (
                                 <div className="checkbox-item" key={`${label}-unselected-${index}`}>
-                                    <input 
-                                        type="checkbox" 
-                                        id={`${field.name}-${label}-unselected`} 
-                                        name={field.name} 
-                                        value={label} 
-                                        checked={false} 
-                                        onChange={handleInputChange}
-                                    />
+                                    <input type="checkbox" id={`${field.name}-${label}-unselected`} name={field.name} value={label} checked={false} onChange={handleInputChange}/>
                                     <label htmlFor={`${field.name}-${label}-unselected`}>{label}</label>
                                 </div>
                             );
@@ -269,7 +252,12 @@ function Generator() {
             <button onClick={handleCopyToClipboard} className="copy-button">Скопировать</button>
           </div>
         </div>
-      ) : ( <div className="generator-form-placeholder"><h2>Шаблоны не найдены</h2><p>Создайте свой первый шаблон в <a href="/builder">Конструкторе шаблонов</a>.</p></div> )}
+      ) : ( 
+        <div className="generator-form-placeholder">
+            <h2>Шаблоны не найдены</h2>
+            <p>Создайте свой первый шаблон в <NavLink to="/builder">Конструкторе шаблонов</NavLink>.</p>
+        </div> 
+      )}
     </>
   );
 }

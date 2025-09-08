@@ -1,16 +1,16 @@
-// src/App.jsx - ЭТАЛОННАЯ ВЕРСИЯ
+// src/App.jsx - ПОЛНАЯ ВЕРСИЯ
 
 import { useState } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import Generator from './pages/Generator';
 import Builder from './pages/Builder';
 import HomePage from './pages/HomePage';
-import ProtectedRoute from './components/ProtectedRoute'; // Убедитесь, что этот файл существует
+import ProtectedRoute from './components/ProtectedRoute';
 import './App.css';
 
 function App() {
   const location = useLocation();
-  const [user, setUser] = useState(null);
+  const [user, setUser] = useState(null); // Состояние для данных пользователя
 
   const getLayoutClass = () => {
     switch (location.pathname) {
@@ -38,7 +38,7 @@ function App() {
 
       <main className={`main-content-area ${getLayoutClass()}`}>
         <Routes>
-          {/* Маршрут по умолчанию - СТРОГО страница входа */}
+          {/* Маршрут по умолчанию - страница входа */}
           <Route 
             path="/" 
             element={<HomePage user={user} setUser={setUser} />} 
@@ -46,8 +46,9 @@ function App() {
 
           {/* Группа защищенных маршрутов */}
           <Route element={<ProtectedRoute user={user} />}>
-            <Route path="/generator" element={<Generator />} />
-            <Route path="/builder" element={<Builder />} />
+            {/* Передаем объект user в дочерние компоненты */}
+            <Route path="/generator" element={<Generator user={user} />} />
+            <Route path="/builder" element={<Builder user={user} />} />
           </Route>
         </Routes>
       </main>

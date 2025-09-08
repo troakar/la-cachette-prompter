@@ -1,120 +1,177 @@
 // src/services/templateService.js
+// Этот файл полностью переписан для работы с Firebase Firestore.
+// Все данные теперь хранятся в облаке и привязаны к email пользователя.
 
-const LOCAL_STORAGE_KEY = 'customPromptTemplates';
+import { db } from '../firebase-config'; // Импортируем настроенную базу данных
+import { 
+  collection, 
+  doc, 
+  addDoc, 
+  getDocs, 
+  updateDoc, 
+  deleteDoc 
+} from 'firebase/firestore';
 
-// --- Управление Шаблонами ---
+// --- Управление Шаблонами Промтов ---
 
-export const getCustomTemplates = () => {
+/**
+ * Получает все кастомные шаблоны для конкретного пользователя.
+ * @param {string} userEmail - Email пользователя, чьи шаблоны нужно загрузить.
+ * @returns {Promise<Array>} - Массив с шаблонами пользователя.
+ */
+export const getCustomTemplates = async (userEmail) => {
+  if (!userEmail) return []; // Защита от вызова без пользователя
+
+  // Путь к подколлекции шаблонов конкретного пользователя: /users/{userEmail}/templates
+  const templatesCollectionRef = collection(db, 'users', userEmail, 'templates');
+  
   try {
-    const templatesJson = localStorage.getItem(LOCAL_STORAGE_KEY);
-    return templatesJson ? JSON.parse(templatesJson) : [];
+    const querySnapshot = await getDocs(templatesCollectionRef);
+    const templates = querySnapshot.docs.map(doc => ({
+      id: doc.id, // Firestore автоматически присваивает уникальный ID
+      ...doc.data()
+    }));
+    return templates;
   } catch (error) {
-    console.error("Failed to parse custom templates from localStorage", error);
+    console.error("Ошибка при получении шаблонов из Firestore:", error);
     return [];
   }
 };
 
-export const saveCustomTemplates = (templates) => {
-  try {
-    const templatesJson = JSON.stringify(templates);
-    localStorage.setItem(LOCAL_STORAGE_KEY, templatesJson);
-  } catch (error) {
-    console.error("Failed to save custom templates to localStorage", error);
-  }
-};
-
-export const addCustomTemplate = (newTemplate) => {
-  if (!newTemplate || !newTemplate.prompt_name) {
-    console.error("Attempted to save a template without a name.");
+/**
+ * Добавляет новый шаблон в коллекцию пользователя.
+ * @param {object} newTemplate - Объект нового шаблона.
+ * @param {string} userEmail - Email пользователя.
+ * @returns {Promise<boolean>} - true в случае успеха.
+ */
+export const addCustomTemplate = async (newTemplate, userEmail) => {
+  if (!newTemplate || !newTemplate.prompt_name || !userEmail) {
+    console.error("Недостаточно данных для сохранения шаблона.");
     return false;
   }
-  const allTemplates = getCustomTemplates();
-  const templateWithId = { ...newTemplate, id: `custom-${Date.now()}` };
-  const updatedTemplates = [...allTemplates, templateWithId];
-  saveCustomTemplates(updatedTemplates);
-  return true;
+  
+  const templatesCollectionRef = collection(db, 'users', userEmail, 'templates');
+  
+  try {
+    // Firestore сам сгенерирует уникальный ID для документа
+    await addDoc(templatesCollectionRef, newTemplate);
+    return true;
+  } catch (error) {
+    console.error("Ошибка при добавлении шаблона в Firestore:", error);
+    return false;
+  }
 };
 
-export const deleteCustomTemplate = (templateId) => {
-  if (!templateId) return false;
-  let allTemplates = getCustomTemplates();
-  const updatedTemplates = allTemplates.filter(t => t.id !== templateId);
-  if (allTemplates.length !== updatedTemplates.length) {
-    saveCustomTemplates(updatedTemplates);
+/**
+ * Обновляет существующий шаблон пользователя.
+ * @param {object} updatedTemplate - Объект шаблона с ID и обновленными данными.
+ * @param {string} userEmail - Email пользователя.
+ * @returns {Promise<boolean>} - true в случае успеха.
+ */
+export const updateCustomTemplate = async (updatedTemplate, userEmail) => {
+    if (!updatedTemplate || !updatedTemplate.id || !userEmail) {
+      console.error("Недостаточно данных для обновления шаблона.");
+      return false;
+    }
+    // Создаем копию объекта, чтобы удалить из него id перед отправкой в Firestore
+    const templateData = { ...updatedTemplate };
+    delete templateData.id;
+
+    const templateDocRef = doc(db, 'users', userEmail, 'templates', updatedTemplate.id);
+    try {
+        await updateDoc(templateDocRef, templateData);
+        return true;
+    } catch (error) {
+        console.error("Ошибка при обновлении шаблона в Firestore:", error);
+        return false;
+    }
+};
+
+/**
+ * Удаляет шаблон пользователя по его ID.
+ * @param {string} templateId - ID шаблона для удаления.
+ * @param {string} userEmail - Email пользователя.
+ * @returns {Promise<boolean>} - true в случае успеха.
+ */
+export const deleteCustomTemplate = async (templateId, userEmail) => {
+  if (!templateId || !userEmail) return false;
+  
+  const templateDocRef = doc(db, 'users', userEmail, 'templates', templateId);
+  try {
+    await deleteDoc(templateDocRef);
     return true;
+  } catch (error) {
+    console.error("Ошибка при удалении шаблона из Firestore:", error);
+    return false;
   }
-  return false;
 };
 
 
 // --- Управление Библиотекой Rich-текста ---
+// Логика полностью аналогична управлению шаблонами
 
-const RICH_TEXT_LIBRARY_KEY = 'richTextLibrary';
-
-export const getRichTextLibrary = () => {
+/**
+ * Получает библиотеку rich-текста для пользователя.
+ * @param {string} userEmail - Email пользователя.
+ * @returns {Promise<Array>}
+ */
+export const getRichTextLibrary = async (userEmail) => {
+  if (!userEmail) return [];
+  const libraryCollectionRef = collection(db, 'users', userEmail, 'richTextLibrary');
   try {
-    const libraryJson = localStorage.getItem(RICH_TEXT_LIBRARY_KEY);
-    return libraryJson ? JSON.parse(libraryJson) : [];
+    const querySnapshot = await getDocs(libraryCollectionRef);
+    return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
   } catch (error) {
-    console.error("Failed to parse rich text library from localStorage", error);
+    console.error("Ошибка при получении библиотеки rich-текста:", error);
     return [];
   }
 };
 
-export const saveRichTextLibrary = (library) => {
+/**
+ * Добавляет или обновляет элемент в библиотеке rich-текста.
+ * @param {object} item - Элемент для сохранения (может содержать id для обновления).
+ * @param {string} userEmail - Email пользователя.
+ * @returns {Promise<boolean>}
+ */
+export const addOrUpdateRichTextItem = async (item, userEmail) => {
+  if (!item || !item.name || !item.content || !userEmail) {
+    return false;
+  }
+
+  const libraryCollectionRef = collection(db, 'users', userEmail, 'richTextLibrary');
+
   try {
-    const libraryJson = JSON.stringify(library);
-    localStorage.setItem(RICH_TEXT_LIBRARY_KEY, libraryJson);
+    if (item.id) {
+      // Обновление существующего
+      const itemDocRef = doc(db, 'users', userEmail, 'richTextLibrary', item.id);
+      const itemData = { ...item };
+      delete itemData.id;
+      await updateDoc(itemDocRef, itemData);
+    } else {
+      // Добавление нового
+      await addDoc(libraryCollectionRef, item);
+    }
+    return true;
   } catch (error) {
-    console.error("Failed to save rich text library to localStorage", error);
-  }
-};
-
-export const addOrUpdateRichTextItem = (item) => {
-  if (!item || !item.name || !item.content) {
-    console.error("Attempted to save a rich text item without name or content.");
+    console.error("Ошибка при сохранении элемента rich-текста:", error);
     return false;
   }
-  let library = getRichTextLibrary();
-  if (item.id) {
-    // Обновление
-    const index = library.findIndex(i => i.id === item.id);
-    if (index !== -1) { library[index] = item; } else { library.push(item); }
-  } else {
-    // Добавление
-    item.id = `rich-${Date.now()}`;
-    library.push(item);
-  }
-  saveRichTextLibrary(library);
-  return true;
 };
 
-export const deleteRichTextItem = (itemId) => {
-  if (!itemId) return false;
-  let library = getRichTextLibrary();
-  const updatedLibrary = library.filter(item => item.id !== itemId);
-  if (library.length !== updatedLibrary.length) {
-    saveRichTextLibrary(updatedLibrary);
+/**
+ * Удаляет элемент из библиотеки rich-текста.
+ * @param {string} itemId - ID элемента для удаления.
+ * @param {string} userEmail - Email пользователя.
+ * @returns {Promise<boolean>}
+ */
+export const deleteRichTextItem = async (itemId, userEmail) => {
+  if (!itemId || !userEmail) return false;
+  const itemDocRef = doc(db, 'users', userEmail, 'richTextLibrary', itemId);
+  try {
+    await deleteDoc(itemDocRef);
     return true;
-  }
-  return false;
-};
-
-// src/services/templateService.js (добавить)
-
-// Обновляет существующий шаблон по его ID
-export const updateCustomTemplate = (updatedTemplate) => {
-  if (!updatedTemplate || !updatedTemplate.id) {
-    console.error("Attempted to update a template without an ID.");
+  } catch (error) {
+    console.error("Ошибка при удалении элемента rich-текста:", error);
     return false;
   }
-  let allTemplates = getCustomTemplates();
-  const index = allTemplates.findIndex(t => t.id === updatedTemplate.id);
-  
-  if (index !== -1) {
-    allTemplates[index] = updatedTemplate;
-    saveCustomTemplates(allTemplates);
-    return true;
-  }
-  return false; // Шаблон не найден
 };
