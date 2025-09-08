@@ -1,23 +1,20 @@
-// src/App.jsx
+// src/App.jsx - ФИНАЛЬНАЯ ВЕРСИЯ С ЗАЩИТОЙ
 
-import { SessionProvider } from 'next-auth/react'; // 1. Импортируем SessionProvider
+import { useState } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import Generator from './pages/Generator';
 import Builder from './pages/Builder';
-import HomePage from './pages/HomePage'; // 2. Импортируем нашу новую стартовую страницу
+import HomePage from './pages/HomePage';
+import ProtectedRoute from './components/ProtectedRoute'; // 1. Импортируем нашего "охранника"
 import './App.css';
 
-function App({ Component, pageProps }) { // 3. Принимаем pageProps
+function App() {
   const location = useLocation();
+  const [user, setUser] = useState(null); // Состояние для данных пользователя
 
   const getLayoutClass = () => {
-    // ... ваш код для определения класса макета
-    // Добавим условие для главной страницы
-    if (location.pathname === '/home') {
-        return 'layout-default';
-    }
     switch (location.pathname) {
-      case '/':
+      case '/generator':
         return 'layout-generator';
       case '/builder':
         return 'layout-builder';
@@ -27,28 +24,36 @@ function App({ Component, pageProps }) { // 3. Принимаем pageProps
   };
 
   return (
-    // 4. Оборачиваем всё в SessionProvider
-    <SessionProvider session={pageProps.session}>
-      <div className="app-layout">
-        <nav className="main-nav">
-          {/* Добавим ссылку на главную страницу */}
-          <NavLink to="/home">Главная</NavLink>
-          <NavLink to="/">Генератор</NavLink>
-          <NavLink to="/builder">Конструктор шаблонов</NavLink>
-        </nav>
+    <div className="app-layout">
+      <nav className="main-nav">
+        {/* 2. Навигация теперь зависит от того, вошел ли пользователь */}
+        <NavLink to="/">Главная</NavLink>
+        {user && (
+          <>
+            <NavLink to="/generator">Генератор</NavLink>
+            <NavLink to="/builder">Конструктор шаблонов</NavLink>
+          </>
+        )}
+        {user && <span className="user-nav-info">Привет, {user.given_name}!</span>}
+      </nav>
 
-        <main className={`main-content-area ${getLayoutClass()}`}>
-          <Routes>
-            {/* Добавляем роут для главной страницы */}
-            <Route path="/home" element={<HomePage />} />
-            <Route path="/" element={<Generator />} />
+      <main className={`main-content-area ${getLayoutClass()}`}>
+        <Routes>
+          {/* 3. Маршрут по умолчанию - ВСЕГДА страница входа */}
+          <Route 
+            path="/" 
+            element={<HomePage user={user} setUser={setUser} />} 
+          />
+
+          {/* 4. ГРУППА ЗАЩИЩЕННЫХ МАРШРУТОВ */}
+          <Route element={<ProtectedRoute user={user} />}>
+            {/* Сюда мы помещаем все страницы, которые должны быть недоступны без входа */}
+            <Route path="/generator" element={<Generator />} />
             <Route path="/builder" element={<Builder />} />
-            {/* Можно сделать редирект с корня на /home */}
-            <Route path="/" element={<HomePage />} />
-          </Routes>
-        </main>
-      </div>
-    </SessionProvider>
+          </Route>
+        </Routes>
+      </main>
+    </div>
   );
 }
 
