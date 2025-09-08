@@ -1,16 +1,16 @@
-// src/App.jsx - ФИНАЛЬНАЯ ВЕРСИЯ С ЗАЩИТОЙ
+// src/App.jsx - ЭТАЛОННАЯ ВЕРСИЯ
 
 import { useState } from 'react';
 import { Routes, Route, NavLink, useLocation } from 'react-router-dom';
 import Generator from './pages/Generator';
 import Builder from './pages/Builder';
 import HomePage from './pages/HomePage';
-import ProtectedRoute from './components/ProtectedRoute'; // 1. Импортируем нашего "охранника"
+import ProtectedRoute from './components/ProtectedRoute'; // Убедитесь, что этот файл существует
 import './App.css';
 
 function App() {
   const location = useLocation();
-  const [user, setUser] = useState(null); // Состояние для данных пользователя
+  const [user, setUser] = useState(null);
 
   const getLayoutClass = () => {
     switch (location.pathname) {
@@ -26,7 +26,6 @@ function App() {
   return (
     <div className="app-layout">
       <nav className="main-nav">
-        {/* 2. Навигация теперь зависит от того, вошел ли пользователь */}
         <NavLink to="/">Главная</NavLink>
         {user && (
           <>
@@ -39,15 +38,14 @@ function App() {
 
       <main className={`main-content-area ${getLayoutClass()}`}>
         <Routes>
-          {/* 3. Маршрут по умолчанию - ВСЕГДА страница входа */}
+          {/* Маршрут по умолчанию - СТРОГО страница входа */}
           <Route 
             path="/" 
             element={<HomePage user={user} setUser={setUser} />} 
           />
 
-          {/* 4. ГРУППА ЗАЩИЩЕННЫХ МАРШРУТОВ */}
+          {/* Группа защищенных маршрутов */}
           <Route element={<ProtectedRoute user={user} />}>
-            {/* Сюда мы помещаем все страницы, которые должны быть недоступны без входа */}
             <Route path="/generator" element={<Generator />} />
             <Route path="/builder" element={<Builder />} />
           </Route>
