@@ -1,6 +1,5 @@
 // src/services/templateService.js
-// Этот файл полностью переписан для работы с Firebase Firestore.
-// Все данные теперь хранятся в облаке и привязаны к email пользователя.
+// ПОЛНАЯ ВЕРСИЯ ДЛЯ FIREBASE, ИСПОЛЬЗУЮЩАЯ UID ПОЛЬЗОВАТЕЛЯ
 
 import { db } from '../firebase-config'; // Импортируем настроенную базу данных
 import { 
@@ -15,20 +14,20 @@ import {
 // --- Управление Шаблонами Промтов ---
 
 /**
- * Получает все кастомные шаблоны для конкретного пользователя.
- * @param {string} userEmail - Email пользователя, чьи шаблоны нужно загрузить.
+ * Получает все кастомные шаблоны для конкретного пользователя по его ID.
+ * @param {string} userId - Уникальный ID пользователя (user.sub).
  * @returns {Promise<Array>} - Массив с шаблонами пользователя.
  */
-export const getCustomTemplates = async (userEmail) => {
-  if (!userEmail) return []; // Защита от вызова без пользователя
+export const getCustomTemplates = async (userId) => {
+  if (!userId) return []; // Защита от вызова без ID пользователя
 
-  // Путь к подколлекции шаблонов конкретного пользователя: /users/{userEmail}/templates
-  const templatesCollectionRef = collection(db, 'users', userEmail, 'templates');
+  // Путь к подколлекции шаблонов: /users/{userId}/templates
+  const templatesCollectionRef = collection(db, 'users', userId, 'templates');
   
   try {
     const querySnapshot = await getDocs(templatesCollectionRef);
     const templates = querySnapshot.docs.map(doc => ({
-      id: doc.id, // Firestore автоматически присваивает уникальный ID
+      id: doc.id,
       ...doc.data()
     }));
     return templates;
@@ -41,19 +40,18 @@ export const getCustomTemplates = async (userEmail) => {
 /**
  * Добавляет новый шаблон в коллекцию пользователя.
  * @param {object} newTemplate - Объект нового шаблона.
- * @param {string} userEmail - Email пользователя.
+ * @param {string} userId - Уникальный ID пользователя (user.sub).
  * @returns {Promise<boolean>} - true в случае успеха.
  */
-export const addCustomTemplate = async (newTemplate, userEmail) => {
-  if (!newTemplate || !newTemplate.prompt_name || !userEmail) {
+export const addCustomTemplate = async (newTemplate, userId) => {
+  if (!newTemplate || !newTemplate.prompt_name || !userId) {
     console.error("Недостаточно данных для сохранения шаблона.");
     return false;
   }
   
-  const templatesCollectionRef = collection(db, 'users', userEmail, 'templates');
+  const templatesCollectionRef = collection(db, 'users', userId, 'templates');
   
   try {
-    // Firestore сам сгенерирует уникальный ID для документа
     await addDoc(templatesCollectionRef, newTemplate);
     return true;
   } catch (error) {
@@ -65,19 +63,19 @@ export const addCustomTemplate = async (newTemplate, userEmail) => {
 /**
  * Обновляет существующий шаблон пользователя.
  * @param {object} updatedTemplate - Объект шаблона с ID и обновленными данными.
- * @param {string} userEmail - Email пользователя.
+ * @param {string} userId - Уникальный ID пользователя (user.sub).
  * @returns {Promise<boolean>} - true в случае успеха.
  */
-export const updateCustomTemplate = async (updatedTemplate, userEmail) => {
-    if (!updatedTemplate || !updatedTemplate.id || !userEmail) {
+export const updateCustomTemplate = async (updatedTemplate, userId) => {
+    if (!updatedTemplate || !updatedTemplate.id || !userId) {
       console.error("Недостаточно данных для обновления шаблона.");
       return false;
     }
-    // Создаем копию объекта, чтобы удалить из него id перед отправкой в Firestore
+    
     const templateData = { ...updatedTemplate };
-    delete templateData.id;
+    delete templateData.id; // ID не должен быть частью данных документа
 
-    const templateDocRef = doc(db, 'users', userEmail, 'templates', updatedTemplate.id);
+    const templateDocRef = doc(db, 'users', userId, 'templates', updatedTemplate.id);
     try {
         await updateDoc(templateDocRef, templateData);
         return true;
@@ -90,17 +88,18 @@ export const updateCustomTemplate = async (updatedTemplate, userEmail) => {
 /**
  * Удаляет шаблон пользователя по его ID.
  * @param {string} templateId - ID шаблона для удаления.
- * @param {string} userEmail - Email пользователя.
+ * @param {string} userId - Уникальный ID пользователя (user.sub).
  * @returns {Promise<boolean>} - true в случае успеха.
  */
-export const deleteCustomTemplate = async (templateId, userEmail) => {
-  if (!templateId || !userEmail) return false;
+export const deleteCustomTemplate = async (templateId, userId) => {
+  if (!templateId || !userId) return false;
   
-  const templateDocRef = doc(db, 'users', userEmail, 'templates', templateId);
+  const templateDocRef = doc(db, 'users', userId, 'templates', templateId);
   try {
     await deleteDoc(templateDocRef);
     return true;
-  } catch (error) {
+  } catch (error)
+  {
     console.error("Ошибка при удалении шаблона из Firestore:", error);
     return false;
   }
@@ -108,16 +107,15 @@ export const deleteCustomTemplate = async (templateId, userEmail) => {
 
 
 // --- Управление Библиотекой Rich-текста ---
-// Логика полностью аналогична управлению шаблонами
 
 /**
  * Получает библиотеку rich-текста для пользователя.
- * @param {string} userEmail - Email пользователя.
+ * @param {string} userId - Уникальный ID пользователя (user.sub).
  * @returns {Promise<Array>}
  */
-export const getRichTextLibrary = async (userEmail) => {
-  if (!userEmail) return [];
-  const libraryCollectionRef = collection(db, 'users', userEmail, 'richTextLibrary');
+export const getRichTextLibrary = async (userId) => {
+  if (!userId) return [];
+  const libraryCollectionRef = collection(db, 'users', userId, 'richTextLibrary');
   try {
     const querySnapshot = await getDocs(libraryCollectionRef);
     return querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
@@ -129,26 +127,24 @@ export const getRichTextLibrary = async (userEmail) => {
 
 /**
  * Добавляет или обновляет элемент в библиотеке rich-текста.
- * @param {object} item - Элемент для сохранения (может содержать id для обновления).
- * @param {string} userEmail - Email пользователя.
+ * @param {object} item - Элемент для сохранения.
+ * @param {string} userId - Уникальный ID пользователя (user.sub).
  * @returns {Promise<boolean>}
  */
-export const addOrUpdateRichTextItem = async (item, userEmail) => {
-  if (!item || !item.name || !item.content || !userEmail) {
+export const addOrUpdateRichTextItem = async (item, userId) => {
+  if (!item || !item.name || !item.content || !userId) {
     return false;
   }
 
-  const libraryCollectionRef = collection(db, 'users', userEmail, 'richTextLibrary');
+  const libraryCollectionRef = collection(db, 'users', userId, 'richTextLibrary');
 
   try {
     if (item.id) {
-      // Обновление существующего
-      const itemDocRef = doc(db, 'users', userEmail, 'richTextLibrary', item.id);
+      const itemDocRef = doc(db, 'users', userId, 'richTextLibrary', item.id);
       const itemData = { ...item };
       delete itemData.id;
       await updateDoc(itemDocRef, itemData);
     } else {
-      // Добавление нового
       await addDoc(libraryCollectionRef, item);
     }
     return true;
@@ -161,12 +157,12 @@ export const addOrUpdateRichTextItem = async (item, userEmail) => {
 /**
  * Удаляет элемент из библиотеки rich-текста.
  * @param {string} itemId - ID элемента для удаления.
- * @param {string} userEmail - Email пользователя.
+ * @param {string} userId - Уникальный ID пользователя (user.sub).
  * @returns {Promise<boolean>}
  */
-export const deleteRichTextItem = async (itemId, userEmail) => {
-  if (!itemId || !userEmail) return false;
-  const itemDocRef = doc(db, 'users', userEmail, 'richTextLibrary', itemId);
+export const deleteRichTextItem = async (itemId, userId) => {
+  if (!itemId || !userId) return false;
+  const itemDocRef = doc(db, 'users', userId, 'richTextLibrary', itemId);
   try {
     await deleteDoc(itemDocRef);
     return true;

@@ -1,7 +1,7 @@
-// src/pages/Generator.jsx - ПОЛНАЯ ВЕРСИЯ ДЛЯ FIREBASE
+// src/pages/Generator.jsx - ПОЛНАЯ ВЕРСИЯ С UID
 
 import { useState, useEffect, useRef } from 'react';
-import { NavLink } from 'react-router-dom'; // Добавлен импорт для ссылки
+import { NavLink } from 'react-router-dom';
 import '../App.css';
 import { templates as builtInTemplates } from '../templates';
 import { getCustomTemplates, deleteCustomTemplate } from '../services/templateService';
@@ -21,7 +21,8 @@ function Generator({ user }) {
     if (!user) return;
     setIsLoading(true);
     
-    const customTemplatesData = await getCustomTemplates(user.email);
+    // ИЗМЕНЕНО: Используем user.sub вместо user.email
+    const customTemplatesData = await getCustomTemplates(user.sub);
     const customTemplates = customTemplatesData.map(t => ({ id: t.id, name: t.prompt_name, data: t }));
 
     const tree = [
@@ -96,7 +97,8 @@ function Generator({ user }) {
   };
 
   const handleDeleteTemplate = async (templateId) => {
-    const success = await deleteCustomTemplate(templateId, user.email);
+    // ИЗМЕНЕНО: Используем user.sub вместо user.email
+    const success = await deleteCustomTemplate(templateId, user.sub);
     if (success) {
       await loadData();
     } else {
